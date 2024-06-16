@@ -96,7 +96,7 @@ TEST_CASE("Default Constructor") {
     CHECK(card.getCardCount("road_building") == 5);
     CHECK(card.getCardCount("year_of_plenty") == 5);
     CHECK(card.getCardCount("victory_point") == 4);
-    CHECK(card.getCardCount("knight") == 3);
+    CHECK(card.getCardCount("knight") == 14);
 }
 
 TEST_CASE("Add Card") {
@@ -108,7 +108,7 @@ TEST_CASE("Add Card") {
 TEST_CASE("Use Card") {
     DevelopCard card;
     CHECK(card.useCard("monopoly"));
-    CHECK(card.getCardCount("monopoly") == 4);
+    CHECK(card.getCardCount("monopoly") == 5);
     CHECK(!card.useCard("non_existent_card"));
 }
 

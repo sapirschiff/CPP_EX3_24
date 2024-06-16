@@ -215,7 +215,7 @@ bool Player::useKnight() {
 }
 bool Player::useVictoryPoint() {
     addVictoryPoints(1);
-    return useDevelopmentCard("Victory_point");
+    return useDevelopmentCard("victory_point");
 }
 
 // Uses a road building development card
