@@ -1,42 +1,60 @@
+// sapirblumshtein@gmail.com
+
 #include "DevelopCard.hpp"
 
-DevelopCard::DevelopCard() : Card("default") {
-    this->cards["monopoly"] = 5;
-    this->cards["road_building"] = 5;
-    this->cards["year_of_plenty"] = 5;
-    this->cards["victory_point"] = 4;
-    this->cards["knight"] = 14;
-}
+// Constructor for base class DevelopCard
+DevelopCard::DevelopCard() {}
 
-DevelopCard::DevelopCard(const std::string& type) : Card(type) {
-    // Initialize counts based on the type
-    if (type == "monopoly" || type == "road_building" || type == "year_of_plenty") {
-        this->cards[type] = 5;
-    } else if (type == "victory_point") {
-        this->cards[type] = 4;
-    } else if (type == "knight") {
-        this->cards[type] = 14;
-    } else {
-        this->cards["default"] = 0;
+// Virtual destructor for base class DevelopCard
+DevelopCard::~DevelopCard() {}
+
+// Static function to create a card based on type
+DevelopCard* DevelopCard::createCard(const std::string& cardType) {
+    if (cardType == "Knight") {
+        return new Knight();
+    } else if (cardType == "victory_point") {
+        return new victoryPoint();
+    } else if (cardType == "road_building") {
+        return new roadBuilding();
+    } else if (cardType == "year_of_plenty") {
+        return new YearOfPlenty();
+    } else if (cardType == "monopoly") {
+        return new monopol();
     }
+    return nullptr;
 }
 
-int DevelopCard::getCardCount(const std::string& cardName) const {
-    auto it = cards.find(cardName);
-    if (it != cards.end()) {
-        return it->second;
-    }
-    return 0;
-}
+// Implementation of Monopoly card
+monopol::monopol() {}
+monopol::~monopol() {}
+int monopol::countOf() const { return 5; }
+DevelopCard* monopol::clone() const { return new monopol(*this); }
+std::string monopol::getName() const { return "monopol"; }
 
-void DevelopCard::addCard(const std::string& cardName, int count) {
-    cards[cardName] += count;
-}
+// Implementation of Victory Point card
+victoryPoint::victoryPoint() {}
+victoryPoint::~victoryPoint() {}
+int victoryPoint::countOf() const { return 4; }
+DevelopCard* victoryPoint::clone() const { return new victoryPoint(*this); }
+std::string victoryPoint::getName() const { return "victory_point"; }
 
-bool DevelopCard::useCard(const std::string& cardName) {
-    // Check if the card is available and the count is greater than 0
-    if (cards.find(cardName) != cards.end() && cards[cardName] > 0) {
-        return true;  // Card is available
-    }
-    return false; // Card is not available
-}
+// Implementation of Year of Plenty card
+YearOfPlenty::YearOfPlenty() {}
+YearOfPlenty::~YearOfPlenty() {}
+int YearOfPlenty::countOf() const { return 5; }
+DevelopCard* YearOfPlenty::clone() const { return new YearOfPlenty(*this); }
+std::string YearOfPlenty::getName() const { return "year_of_plenty"; }
+
+// Implementation of Road Building card
+roadBuilding::roadBuilding() {}
+roadBuilding::~roadBuilding() {}
+int roadBuilding::countOf() const { return 5; }
+DevelopCard* roadBuilding::clone() const { return new roadBuilding(*this); }
+std::string roadBuilding::getName() const { return "road_building"; }
+
+// Implementation of Knight card
+Knight::Knight() {}
+Knight::~Knight() {}
+int Knight::countOf() const { return 14; }
+DevelopCard* Knight::clone() const { return new Knight(*this); }
+std::string Knight::getName() const { return "Knight"; }

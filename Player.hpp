@@ -1,3 +1,5 @@
+// sapirblumshtein@gmail.com
+
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
@@ -5,74 +7,82 @@
 #include <unordered_map>
 #include <vector>
 #include "DevelopCard.hpp"
-#include "AdvancementCard.hpp"
+#include "Resource.hpp"
+#include "Board.hpp" 
 
-
-
-class Hexagon;
-class Vertex;
+class Board;   // Forward declaration for Board class
+class Hexagon; // Forward declaration for Hexagon class
+class Vertex;  // Forward declaration for Vertex class
 
 class Player {
 public:
-    Player(const std::string& name);
+    Player(const std::string& name); // Constructor
+    ~Player(); // Destructor
 
-    void addResource(const std::string& resource, int amount);
-    bool removeResource(const std::string& resource, int amount);
-    bool hasResource(const std::string& resource, int amount) const;
-    const std::unordered_map<std::string, int>& getResources() const;
+    void addResource(Resource resource, int amount); // Add resources to player
+    bool removeResource(Resource resource, int amount); // Remove resources from player
+    bool hasResource(Resource resource, int amount) const; // Check if player has specific resources
+    const std::unordered_map<Resource, int>& getResources() const; // Get player's resources
 
+    void addDevelopmentCard(const DevelopCard& card); // Add development card to player
+    bool useDevelopmentCard(const std::string& cardType); // Use a development card
+    int getDevelopmentCardCount(const std::string& cardType) const; // Get count of specific development card
 
-    void addDevelopmentCard(const DevelopCard& card);
-    bool useDevelopmentCard(const std::string& cardType);
-    int getDevelopmentCardCount(const std::string& cardType) const;
+    void addAdvancementCard(Resource resource); // Add advancement card to player
+    bool useAdvancementCard(Resource resourceType); // Use an advancement card
 
-    void addAdvancementCard(const AdvancementCard& card);//
-    bool useAdvancementCard(AdvancementCard::ResourceType resourceType);//
+    void addVictoryPoints(int points); // Add victory points to player
+    int getVictoryPoints() const; // Get player's victory points
+    bool isTurn() const; // Check if it's player's turn
+    void setTurn(bool turn); // Set player's turn
+    void printStatus() const; // Print player's status
+    std::string getName() const; // Get player's name
+    void initializeResources(const std::vector<Resource>& initialResources); // Initialize player's resources
 
-    void addVictoryPoints(int points);
-    int getVictoryPoints() const;
-    bool isTurn() const;
-    void setTurn(bool turn);
-    void printStatus() const;
-    std::string getName() const;
-    void initializeResources(const std::vector<std::string>& initialResources) ;
+    void rollDice(); // Roll dice for player
+    void discardResources(); // Discard resources if needed
+    void addSettlement(int vertexIndex); // Add settlement to player
+    void addRoad(int edgeIndex); // Add road to player
+    void receiveResources(const std::vector<Hexagon>& hexagons, int vertexIndex); // Receive resources from hexagons
+    int getDiceRoll() const; // Get dice roll value
+    const std::vector<int>& getSettlements() const; // Get player's settlements
+    const std::vector<int>& getRoads() const; // Get player's roads
+    void getCities(const std::vector<Vertex>& vertices) const; // Get player's cities
+    void tradeResources(Player& otherPlayer, Resource resource1, int amount1, Resource resource2, int amount2); // Trade resources between players
 
-    // Game actions
-    void rollDice();
-    void discardResources(); // to remove resoccrse if the number is 7
-    void addSettlement(int vertexIndex);
-    void addRoad(int edgeIndex);
-    void receiveResources(const std::vector<Hexagon>& hexagons, int vertexIndex);//
-    int getDiceRoll() const;//
-    const std::vector<int>& getSettlements() const;
-    const std::vector<int>& getRoads() const;
-    void getCities(const std::vector<Vertex>& vertices) const;
-    void tradeResources(Player& otherPlayer, const std::string& resource1, int amount1, const std::string& resource2, int amount2);
+    bool canBuySettlement() const; // Check if player can buy a settlement
+    bool canBuyCity() const; // Check if player can buy a city
+    bool canBuyRoad() const; // Check if player can buy a road
+    bool canUseDevelopmentCard(const std::string& cardType) const; // Check if player can use a development card
 
-    // Check if player can buy or use certain actions
-    bool canBuySettlement() const;
-    bool canBuyCity() const;
-    bool canBuyRoad() const;
-    bool canUseDevelopmentCard(const std::string& cardType) const;
+    bool useKnight(); // Use knight development card
+    bool useRoadBuilding(); // Use road building development card
+    bool useYearOfPlenty(); // Use year of plenty development card
+    bool useMonopoly(); // Use monopoly development card
+    bool useVictoryPoint(); // Use victory point development card
 
-    // Use development cards
-    bool useKnight();
-    bool useRoadBuilding();
-    bool useYearOfPlenty();
-    bool useMonopoly();
-    bool useVictoryPoint() ;
+    void placeInitialSettlement(int vertexIndex); // Place initial settlement
+    void placeInitialRoad(int edgeIndex); // Place initial road
+    void printResources() const; // Print player's resources
+    void placeRoad(int edgeIndex); // Place road
+    void buildSettlement(int vertexIndex); // Build settlement
+    void buyDevelopmentCard(); // Buy development card
+    void buildCity(int vertexIndex); // Build city
+    void setBoard(Board* board); // Set the board for player
 
 private:
     std::string name;
     int victoryPoints;
     bool turn;
     int diceRoll;
-    std::unordered_map<std::string, int> resources;
-    std::unordered_map<AdvancementCard::ResourceType, int> advancementCards;
+    std::vector<DevelopCard*> cards;
+    std::unordered_map<Resource, int> resources;
+    std::unordered_map<Resource, int> advancementCards;
     std::unordered_map<std::string, int> developmentCards;
     std::vector<Vertex> vertices;
     std::vector<int> settlements;
     std::vector<int> roads;
+    Board* board;
 };
 
 #endif  // PLAYER_HPP

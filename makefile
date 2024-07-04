@@ -1,10 +1,11 @@
+#Sapirblumshtein@gmail.com
 # Define compiler and compiler flags
 CC = g++
 CFLAGS = -std=c++11 -Wall
 
 # Define source files
-GAME_SRCS = catan.cpp Board.cpp Hexagon.cpp Vertex.cpp Edge.cpp DevelopCard.cpp Player.cpp Card.cpp AdvancementCard.cpp 
-TEST_SRCS = Test.cpp Board.cpp Hexagon.cpp Vertex.cpp Edge.cpp DevelopCard.cpp Player.cpp Card.cpp AdvancementCard.cpp 
+GAME_SRCS = catan.cpp Board.cpp Hexagon.cpp Vertex.cpp Edge.cpp DevelopCard.cpp Player.cpp 
+TEST_SRCS = Test.cpp Board.cpp Hexagon.cpp Vertex.cpp Edge.cpp DevelopCard.cpp Player.cpp 
 
 # Define object files
 GAME_OBJS = $(GAME_SRCS:.cpp=.o)

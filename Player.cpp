@@ -1,30 +1,42 @@
-// Player.cpp
+// sapirblumshtein@gmail.com
+
 #include "Player.hpp"
 #include "Board.hpp"
-#include "Hexagon.hpp"
 #include "Vertex.hpp"
-#include "AdvancementCard.hpp"
+#include "DevelopCard.hpp"
+#include "Edge.hpp"
+#include "Hexagon.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <random>
+#include <stdexcept>
 
+// Constructor to initialize player's name and resources
+Player::Player(const std::string& name): name(name), victoryPoints(0), turn(false), board(nullptr) {
+    resources[WOOD] = 0;
+    resources[BRICK] = 0;
+    resources[SHEEP] = 0;
+    resources[WHEAT] = 0;
+    resources[CLAY] = 0;
+}
 
-// Constructor initializing player's name, victory points, and turn
-Player::Player(const std::string& name)
-    : name(name), victoryPoints(0), turn(false) {}
-    
-// Method to discard resources if the player has more than 7 and the roll dice is 7
+// Destructor to clean up dynamically allocated development cards
+Player::~Player() {
+    for (auto card : cards) {
+        delete card;
+    }
+}
+
+// Function to discard resources when the total exceeds 7
 void Player::discardResources() {
     int totalResources = 0;
     for (const auto& pair : resources) {
         totalResources += pair.second;
     }
-    // If the player has more than 7 resources, they must discard half (rounded down)
     if (totalResources > 7) {
         int resourcesToDiscard = totalResources / 2;
         std::cout << name << " needs to discard " << resourcesToDiscard << " resource cards.\n";
 
-        // Discard resources in arbitrary order; in a real game, the player would choose
         for (auto& pair : resources) {
             int discardAmount = std::min(pair.second, resourcesToDiscard);
             pair.second -= discardAmount;
@@ -35,124 +47,128 @@ void Player::discardResources() {
     }
 }
 
-// Adds a specified amount of a resource to the player's resources
-void Player::addResource(const std::string& resource, int amount) { 
-    resources[resource] += amount;
+// Function to add resources to player
+void Player::addResource(Resource r, int amount) {
+    resources[r] += amount; // Use += to add resources
 }
 
-const std::unordered_map<std::string, int>& Player::getResources() const {
+// Function to get player's resources
+const std::unordered_map<Resource, int>& Player::getResources() const {
     return resources;
 }
-// Remove a specified amount of a resource from the player's resources
-bool Player::removeResource(const std::string& resource, int amount) {
-    if (resources[resource] >= amount) {
-        resources[resource] -= amount;
+
+// Function to remove resources from player
+bool Player::removeResource(Resource r, int amount) {
+    if (resources[r] >= amount) {
+        resources[r] -= amount;
         return true;
     }
     return false;
 }
 
-// Checks if the player has at least a specified amount of a resource
-bool Player::hasResource(const std::string& resource, int amount) const {
-    auto it = resources.find(resource);
+// Function to check if player has specific resources
+bool Player::hasResource(Resource r, int amount) const {
+    auto it = resources.find(r);
     return it != resources.end() && it->second >= amount;
 }
 
-// Adds a development card to the player's collection
+// Function to add a development card to player
 void Player::addDevelopmentCard(const DevelopCard& card) {
-    developmentCards[card.getType()]++;
+    cards.push_back(card.clone());
+    developmentCards[card.getName()]++;
 }
 
-// Uses a development card from the player's possession
+// Function to use a development card
 bool Player::useDevelopmentCard(const std::string& cardType) {
-    auto it = developmentCards.find(cardType);
-    if ((cardType == "victory_point" ))
-    {
-        
-    }
-    
-    if (it != developmentCards.end() && it->second > 0) {
-        it->second--;
-        return true;
+    for (auto it = cards.begin(); it != cards.end(); ++it) {
+        if ((*it)->getName() == cardType) {
+            delete *it;
+            cards.erase(it);
+            developmentCards[cardType]--;
+            return true;
+        }
     }
     return false;
 }
 
-// Gets the count of a specific type of development card
+// Function to get the count of specific development card
 int Player::getDevelopmentCardCount(const std::string& cardType) const {
     auto it = developmentCards.find(cardType);
-    return (it != developmentCards.end()) ? it->second : 0;
+    return it != developmentCards.end() ? it->second : 0;
 }
 
-// Adds a specified number of victory points to the player's total
+// Function to add victory points to player
 void Player::addVictoryPoints(int points) {
     victoryPoints += points;
 }
 
-// Gets the current total of the player's victory points
+// Function to get player's victory points
 int Player::getVictoryPoints() const {
     return victoryPoints;
 }
 
-// Checks if it is currently the player's turn
+// Function to check if it's player's turn
 bool Player::isTurn() const {
     return turn;
 }
 
-// Sets whether it is currently the player's turn
+// Function to set player's turn
 void Player::setTurn(bool turn) {
     this->turn = turn;
 }
 
-// Initializes the player's resources with a list of starting resources
-void Player::initializeResources(const std::vector<std::string>& initialResources) {
+// Function to initialize player's resources
+void Player::initializeResources(const std::vector<Resource>& initialResources) {
     for (const auto& resource : initialResources) {
         addResource(resource, 1);
     }
 }
 
-// Prints the cities owned by the player
+// Function to print cities owned by player
 void Player::getCities(const std::vector<Vertex>& vertices) const {
-    std::cout << "Cities for player " << name << ":" << std::endl;
+    std::cout << "Cities for player " << name << ":\n";
     for (const auto& vertex : vertices) {
         if (vertex.getOwner() == this && vertex.getStructure() == Vertex::Structure::City) {
-            // Print or process city information
-            std::cout << "City at vertex index: " << &vertex - &vertices[0] << std::endl;  // Example: using pointer arithmetic
+            std::cout << "City at vertex index: " << &vertex - &vertices[0] << '\n';
         }
     }
 }
 
-// Simulates rolling a dice
+// Function to roll dice and distribute resources based on the roll
 void Player::rollDice() {
-    diceRoll = rand() % 6 + 1;
+    diceRoll = rand() % 6 + 1 + rand() % 6 + 1;
+    std::cout << name << " rolled a " << diceRoll << '\n';
+    if (board != nullptr) {
+        board->distributeResources(diceRoll);
+    }
 }
 
-// Adds a settlement to the player's list of settlements
+// Function to add settlement to player
 void Player::addSettlement(int vertexIndex) {
     settlements.push_back(vertexIndex);
 }
 
-// Adds a road to the player's list of roads
+// Function to add road to player
 void Player::addRoad(int edgeIndex) {
     roads.push_back(edgeIndex);
 }
 
-// Gets the result of the last dice roll
+// Function to get dice roll value
 int Player::getDiceRoll() const {
     return diceRoll;
 }
 
-// Gets a constant reference to the player's list of settlements
+// Function to get player's settlements
 const std::vector<int>& Player::getSettlements() const {
     return settlements;
 }
 
-// Gets a constant reference to the player's list of roads
+// Function to get player's roads
 const std::vector<int>& Player::getRoads() const {
     return roads;
 }
 
-// Receives resources from the initial setup based on the placement of the settlement
+// Function to receive resources from hexagons
 void Player::receiveResources(const std::vector<Hexagon>& hexagons, int vertexIndex) {
     for (const auto& hex : hexagons) {
         for (const auto* vertex : hex.getVertices()) {
@@ -164,25 +180,25 @@ void Player::receiveResources(const std::vector<Hexagon>& hexagons, int vertexIn
     }
 }
 
-// Gets the player's name
+// Function to get player's name
 std::string Player::getName() const {
     return name;
 }
 
-// Trade resources with another player
-void Player::tradeResources(Player& otherPlayer, const std::string& resource1, int amount1, const std::string& resource2, int amount2) {
+// Function to trade resources between players
+void Player::tradeResources(Player& otherPlayer, Resource resource1, int amount1, Resource resource2, int amount2) {
     if (amount1 <= 0 || amount2 <= 0) {
-        std::cout << "Trade amounts must be positive." << std::endl;
+        std::cout << "Trade amounts must be positive.\n";
         return;
     }
 
     if (!hasResource(resource1, amount1)) {
-        std::cout << name << " does not have enough " << resource1 << " to trade." << std::endl;
+        std::cout << name << " does not have enough " << Hexagon::resourceToString(resource1) << " to trade.\n";
         return;
     }
 
     if (!otherPlayer.hasResource(resource2, amount2)) {
-        std::cout << otherPlayer.getName() << " does not have enough " << resource2 << " to trade." << std::endl;
+        std::cout << otherPlayer.getName() << " does not have enough " << Hexagon::resourceToString(resource2) << " to trade.\n";
         return;
     }
 
@@ -191,60 +207,62 @@ void Player::tradeResources(Player& otherPlayer, const std::string& resource1, i
     addResource(resource2, amount2);
     otherPlayer.addResource(resource1, amount1);
 
-    std::cout << name << " traded " << amount1 << " " << resource1 << " with " << otherPlayer.getName() << " for " << amount2 << " " << resource2 << "." << std::endl;
+    std::cout << name << " traded " << amount1 << " " << Hexagon::resourceToString(resource1) << " with " << otherPlayer.getName() << " for " << amount2 << " " << Hexagon::resourceToString(resource2) << ".\n";
 }
 
-// Checks if the player can buy a settlement
+// Function to check if player can buy a settlement
 bool Player::canBuySettlement() const {
-    return hasResource("Brick", 1) && hasResource("Wood", 1) && hasResource("Sheep", 1) && hasResource("Wheat", 1);
+    return hasResource(BRICK, 1) && hasResource(WOOD, 1) && hasResource(SHEEP, 1) && hasResource(WHEAT, 1);
 }
 
-// Checks if the player can buy a city
+// Function to check if player can buy a city
 bool Player::canBuyCity() const {
-    return hasResource("Clay", 3) && hasResource("Wheat", 2);
+    return hasResource(CLAY, 3) && hasResource(WHEAT, 2);
 }
 
-// Checks if the player can buy a road
+// Function to check if player can buy a road
 bool Player::canBuyRoad() const {
-    return hasResource("Brick", 1) && hasResource("Wood", 1);
+    return hasResource(BRICK, 1) && hasResource(WOOD, 1);
 }
 
-// Uses a knight development card
+// Function to use knight development card
 bool Player::useKnight() {
     return useDevelopmentCard("knight");
 }
+
+// Function to use victory point development card
 bool Player::useVictoryPoint() {
     addVictoryPoints(1);
     return useDevelopmentCard("victory_point");
 }
 
-// Uses a road building development card
+// Function to use road building development card
 bool Player::useRoadBuilding() {
     return useDevelopmentCard("road_building");
 }
 
-// Uses a year of plenty development card
+// Function to use year of plenty development card
 bool Player::useYearOfPlenty() {
     return useDevelopmentCard("year_of_plenty");
 }
 
-// Uses a monopoly development card
+// Function to use monopoly development card
 bool Player::useMonopoly() {
     return useDevelopmentCard("monopoly");
 }
 
-// Checks if the player can use a specific type of development card
+// Function to check if player can use a development card
 bool Player::canUseDevelopmentCard(const std::string& cardType) const {
     return getDevelopmentCardCount(cardType) > 0;
 }
 
-// Adds an advancement card to the player's possession
-void Player::addAdvancementCard(const AdvancementCard& card) {
-    advancementCards[card.getResourceType()]++;
+// Function to add advancement card to player
+void Player::addAdvancementCard(Resource resource) {
+    advancementCards[resource]++;
 }
 
-// Uses an advancement card from the player's possession
-bool Player::useAdvancementCard(AdvancementCard::ResourceType resourceType) {
+// Function to use an advancement card
+bool Player::useAdvancementCard(Resource resourceType) {
     auto it = advancementCards.find(resourceType);
     if (it != advancementCards.end() && it->second > 0) {
         it->second--;
@@ -253,17 +271,126 @@ bool Player::useAdvancementCard(AdvancementCard::ResourceType resourceType) {
     return false;
 }
 
-// Prints the current status of the player
+// Function to print player's resources
+void Player::printResources() const {
+    for (const auto& resource : resources) {
+        std::cout << resource.first << ": " << resource.second << std::endl;
+    }
+}
+
+// Function to place a road
+void Player::placeRoad(int edgeIndex) {
+    if (canBuyRoad()) {
+        removeResource(WOOD, 1);
+        removeResource(BRICK, 1);
+        addRoad(edgeIndex);
+    } else {
+        std::cout << "Not enough resources to place a road.\n";
+    }
+}
+
+// Function to build a settlement
+void Player::buildSettlement(int vertexIndex) {
+    if (canBuySettlement()) {
+        removeResource(WOOD, 1);
+        removeResource(BRICK, 1);
+        removeResource(SHEEP, 1);
+        removeResource(WHEAT, 1);
+        addSettlement(vertexIndex);
+        addVictoryPoints(1);
+    } else {
+        std::cout << "Not enough resources to build a settlement.\n";
+    }
+}
+
+// Function to buy a development card
+void Player::buyDevelopmentCard() {
+    // Assume each development card costs 1 wheat, 1 sheep, and 1 ore
+    if (hasResource(WHEAT, 1) && hasResource(SHEEP, 1) && hasResource(CLAY, 1)) {
+        removeResource(WHEAT, 1);
+        removeResource(SHEEP, 1);
+        removeResource(CLAY, 1);
+        // Add a development card to the player's collection
+    } else {
+        std::cout << "Not enough resources to buy a development card.\n";
+    }
+}
+
+// Function to build a city
+void Player::buildCity(int vertexIndex) {
+    if (canBuyCity()) {
+        removeResource(WHEAT, 2);
+        removeResource(CLAY, 3);
+        // Assume adding a city replaces a settlement
+        // Additional logic to handle city building
+        addVictoryPoints(1);
+    } else {
+       std::cout << "Not enough resources to build a city.\n";
+    }
+}
+
+// Function to place initial settlement
+void Player::placeInitialSettlement(int vertexIndex) {
+    // Check if the location is occupied
+    for (const auto& settlement : settlements) {
+        if (settlement == vertexIndex) {
+            std::cout << "Settlement already exists at this vertex.\n";
+        }
+    }
+
+    // Check that the settlement is not within two edges of another settlement
+    for (const auto& settlement : settlements) {
+        if (abs(settlement - vertexIndex) <= 2) {
+            std::cout << "Cannot place a settlement within two edges of another settlement.\n";
+        }
+    }
+    addVictoryPoints(1);
+    addSettlement(vertexIndex);
+    // Additional logic to handle initial settlement placement
+}
+
+// Function to place initial road
+void Player::placeInitialRoad(int edgeIndex) {
+    // Check if the location is occupied
+    for (const auto& road : roads) {
+        if (road == edgeIndex) {
+            std::cout << "Road already exists at this edge.\n";
+        }
+    }
+
+    // Check that the initial road is placed adjacent to an initial settlement
+    bool adjacentToSettlement = false;
+    for (const auto& settlement : settlements) {
+        if (abs(settlement - edgeIndex) == 1) {
+            adjacentToSettlement = true;
+            break;
+        }
+    }
+
+    if (!adjacentToSettlement) {
+        std::cout << "Initial road must be placed adjacent to an initial settlement.\n";
+    }
+
+    addRoad(edgeIndex);
+    // Additional logic to handle initial road placement
+}
+
+// Function to print player's status
 void Player::printStatus() const {
-    std::cout << "Player: " << name << std::endl;
-    std::cout << "Resources:" << std::endl;
+    std::cout << "Player: " << name << '\n';
+    std::cout << "Resources:\n";
     for (const auto& pair : resources) {
-        std::cout << "  " << pair.first << ": " << pair.second << std::endl;
+        std::cout << "  " << Hexagon::resourceToString(pair.first) << ": " << pair.second << '\n';
     }
-    std::cout << "Development Cards:" << std::endl;
+    std::cout << "Development Cards:\n";
     for (const auto& pair : developmentCards) {
-        std::cout << "  " << pair.first << ": " << pair.second << std::endl;
+        std::cout << "  " << pair.first << ": " << pair.second << '\n';
     }
-    std::cout << "Victory Points: " << victoryPoints << std::endl;
-    std::cout << "Turn: " << (turn ? "Yes" : "No") << std::endl;
+    std::cout << "Victory Points: " << victoryPoints << '\n';
+    std::cout << "Turn: " << (turn ? "Yes" : "No") << '\n';
+}
+
+// Function to set the board for player
+void Player::setBoard(Board* board) {
+    this->board = board;
 }
